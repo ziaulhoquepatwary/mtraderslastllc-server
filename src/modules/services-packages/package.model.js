@@ -71,5 +71,9 @@ const packageSchema = new Schema(
     }
 );
 
+// Compound/Text Index
+packageSchema.index({ serviceCategory: 1, price: 1 });
+packageSchema.index({ title: 'text', shortDescription: 'text' });
+
 const Package = mongoose.model("Package", packageSchema)
 export default Package;
