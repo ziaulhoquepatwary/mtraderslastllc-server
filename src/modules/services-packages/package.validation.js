@@ -54,9 +54,4 @@ export const packageValidationSchema = z.object({
     requirements: z
         .array(z.string().trim().min(1, "Requirement cannot be empty."))
         .default([]),
-    status: z
-        .enum(["active", "draft"], {
-            error: "Status is required.",
-        })
-        .default("active"),
 });

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { toNodeHandler } from "better-auth/node";
+import packageRoute from "./modules/services-packages/package.routes.js"
 
 const createApp = (auth) => {
     const app = express();
@@ -16,6 +17,9 @@ const createApp = (auth) => {
 
     app.use(cookieParser());
     app.use(express.json());
+
+    app.all("/api/auth/*splat", toNodeHandler(auth));
+    app.use("/api/package", packageRoute)
 
     app.get("/", (req, res) => {
         res.send("M traders server is running successfully");
