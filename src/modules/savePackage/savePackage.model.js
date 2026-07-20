@@ -1,3 +1,5 @@
+import mongoose, { model, Schema } from "mongoose";
+
 const savePackageSchema = new Schema(
     {
         userId: { type: String, required: [true, "User ID is required"] },
