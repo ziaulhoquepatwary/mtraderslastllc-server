@@ -11,8 +11,8 @@ export const createPackage = catchAsync(async (req, res) => {
     const parsed = packageValidationSchema.safeParse(body);
 
     if (!parsed.success) {
-        throw new AppError(404, `Validation failed ${parsed.error}`);
-    };
+        throw new AppError(400, `Validation failed: ${parsed.error.message}`);
+    }
 
     const newPackage = await Package.create({
         ...parsed.data,
@@ -27,7 +27,7 @@ export const createPackage = catchAsync(async (req, res) => {
 });
 
 export const getAllPackages = catchAsync(async (req, res) => {
-    const { search, category, sortByPrice, page = 1, limit = 10 } = req.query;
+    const { search, category, sortByPrice, page = 1, limit = 12 } = req.query;
 
     const pageNumber = Math.max(1, parseInt(page));
     const limitNumber = Math.max(1, parseInt(limit));
@@ -54,15 +54,18 @@ export const getAllPackages = catchAsync(async (req, res) => {
         sortOptions = { price: -1 };
     }
 
+    // Essential fields for card view
+    const fieldsToSelect = "title serviceCategory image shortDescription price deliveryTime status technologies createdAt";
+
     const [packages, totalPackages] = await Promise.all([
         Package.find(queryConditions)
+            .select(fieldsToSelect)
             .sort(sortOptions)
             .skip(skip)
             .limit(limitNumber)
             .lean(),
         Package.countDocuments(queryConditions)
     ]);
-
 
     return res.status(200).json({
         success: true,

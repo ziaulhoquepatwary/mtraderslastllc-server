@@ -66,6 +66,11 @@ const packageSchema = new Schema(
             type: [String],
             default: [],
         },
+        status: {
+            type: String,
+            enum: ["active", "draft"],
+            default: "active",
+        },
     },
     {
         timestamps: true,
