@@ -1,6 +1,80 @@
+import Stripe from "stripe";
+import mongoose from "mongoose";
 import catchAsync from "../../utils/catchAsync.js";
 import Order from "./order.model.js";
+import Package from "../services-packages/package.model.js";
+import AppError from "../../utils/AppError.js";
 
+
+export const handleStripeWebhook = async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body, // Must be the raw, unparsed request buffer
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (err) {
+        throw new AppError(404, `Webhook Signature Verification Failed: ${err.message}`);
+    }
+
+    if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+
+        const { userId, packageId, userPhone, resourceLink } = session.metadata;
+        const stripeSessionId = session.id;
+
+        try {
+            const currentUser = await mongoose.connection.collection("user").findOne({
+                _id: userId
+            });
+
+            if (!currentUser) {
+                throw new AppError(404, "User not found in database");
+            }
+
+            const targetPackage = await Package.findById(packageId).lean();
+            if (!targetPackage) {
+                throw new AppError(404, "Package not found");
+            }
+
+            const daysMatch = targetPackage.deliveryTime.match(/\d+/);
+            const deliveryDays = daysMatch ? parseInt(daysMatch[0]) : 7;
+
+            const calculatedDeliveryDate = new Date();
+            calculatedDeliveryDate.setDate(calculatedDeliveryDate.getDate() + deliveryDays);
+
+            await Order.create({
+                packageId: targetPackage._id,
+                title: targetPackage.title,
+                image: targetPackage.image,
+                category: targetPackage.serviceCategory,
+                price: targetPackage.price,
+                deliveryTime: targetPackage.deliveryTime,
+                deliveryDate: calculatedDeliveryDate,
+                userId: userId,
+                userName: currentUser.name,
+                userEmail: currentUser.email,
+                userPhone: userPhone,
+                resourceLink: resourceLink,
+                status: "pending",
+                paymentStatus: "paid",
+                stripeSessionId: stripeSessionId
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: `Order creation failed inside webhook: ${error.message}`
+            });
+        }
+    }
+
+    return res.status(200).json({ received: true });
+};
 
 export const getMyOrders = catchAsync(async (req, res) => {
     const userId = req.user.id;

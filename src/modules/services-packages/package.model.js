@@ -19,12 +19,14 @@ const packageSchema = new Schema(
                 "ERP Solution",
                 "Mobile App Development",
                 "E-commerce Solution",
-                "Cloud Service"
+                "Cloud Service",
+                "UI/UX & Graphic Design",
+                "IT Consulting"
             ]
         },
         image: {
-            type: String,
-            required: true,
+            type: [String],
+            required: [true, 'At least one image is required']
         },
         shortDescription: {
             type: String,

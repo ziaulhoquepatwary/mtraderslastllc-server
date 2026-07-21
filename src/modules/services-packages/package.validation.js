@@ -15,14 +15,15 @@ export const packageValidationSchema = z.object({
         "ERP Solution",
         "Mobile App Development",
         "E-commerce Solution",
-        "Cloud Service"
+        "Cloud Service",
+        "UI/UX & Graphic Design",
+        "IT Consulting"
     ], {
         error: "Service category is required."
     }),
     image: z
-        .string({ error: "Image is required." })
-        .trim()
-        .min(1, "Image is required."),
+        .array(z.string().trim().url("Invalid image URL."))
+        .min(1, "At least one image must be provided"),
     shortDescription: z
         .string({ error: "Short description is required." })
         .trim()
