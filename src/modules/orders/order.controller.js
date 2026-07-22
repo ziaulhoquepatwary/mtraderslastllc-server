@@ -89,7 +89,7 @@ export const getMyOrders = catchAsync(async (req, res) => {
 
     const [orders, totalOrders] = await Promise.all([
         Order.find({ userId })
-            .select("_id title price status deliveryDate createdAt category image")
+            .select("_id title price status deliveryDate createdAt category image packageId")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNumber)
@@ -112,9 +112,8 @@ export const getMyOrders = catchAsync(async (req, res) => {
 
 export const getOrderDetails = catchAsync(async (req, res) => {
     const { id } = req.params;
-    const userId = req.user.id;
+    const order = await Order.findById(id).lean();
 
-    const order = await Order.findOne({ _id: id, userId }).lean();
     if (!order) {
         throw new AppError(404, "Order not found");
     }
@@ -140,7 +139,7 @@ export const getAllOrders = catchAsync(async (req, res) => {
 
     const [orders, totalOrders] = await Promise.all([
         Order.find(queryConditions)
-            .select("_id title price userName userEmail status deliveryDate createdAt category")
+            .select("_id title price userName userEmail status deliveryDate createdAt category packageId")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNumber)

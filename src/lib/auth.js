@@ -30,6 +30,14 @@ export const createAuth = (db) => {
             }
         },
 
+        advanced: {
+            defaultCookieAttributes: {
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+                secure: process.env.NODE_ENV === "production" ? true : false,
+                httpOnly: true,
+            }
+        },
+
 
         user: {
             additionalFields: {

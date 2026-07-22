@@ -11,7 +11,7 @@ router.post("/stripe-webhook", express.raw({ type: "application/json" }), handle
 router.use(express.json());
 
 router.get("/my-orders", verifyToken, protectRoute(ROLES.USER), getMyOrders);
-router.get("/order-details/:id", verifyToken, protectRoute(ROLES.USER, ROLES.ADMIN), getOrderDetails);
+router.get("/order-details/:id", verifyToken, getOrderDetails);
 router.get("/get-allOrders", verifyToken, protectRoute(ROLES.ADMIN), getAllOrders)
 router.patch("/update-order/:id", verifyToken, protectRoute(ROLES.ADMIN), updateOrderStatus)
 router.delete("/cancel-order", verifyToken, protectRoute(ROLES.USER), cancelOrder)
