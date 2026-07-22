@@ -6,6 +6,7 @@ import packageRoute from "./modules/services-packages/package.routes.js";
 import savePackageRouter from "./modules/savePackage/savePackage.routes.js";
 import orderRouter from "./modules/orders/order.routes.js";
 import ReviewRoutes from "./modules/reviews/review.route.js";
+import AdminRoute from "./modules/admin/admin.route.js";
 
 const createApp = (auth) => {
     const app = express();
@@ -19,13 +20,16 @@ const createApp = (auth) => {
     }));
 
     app.use(cookieParser());
+
+    app.use("/api/order", orderRouter);
+
     app.use(express.json());
 
     app.all("/api/auth/*splat", toNodeHandler(auth));
     app.use("/api/package", packageRoute);
     app.use("/api/savePackage", savePackageRouter);
-    app.use("/api/order", orderRouter);
     app.use("/api/reviews", ReviewRoutes);
+    app.use("/api/admin", AdminRoute);
 
     app.get("/", (req, res) => {
         res.send("M traders server is running successfully");
