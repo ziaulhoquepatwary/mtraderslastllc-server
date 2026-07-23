@@ -7,6 +7,7 @@ import savePackageRouter from "./modules/savePackage/savePackage.routes.js";
 import orderRouter from "./modules/orders/order.routes.js";
 import ReviewRoutes from "./modules/reviews/review.route.js";
 import AdminRoute from "./modules/admin/admin.route.js";
+import emailRoute from "./modules/emailSender/email.route.js";
 
 const createApp = (auth) => {
     const app = express();
@@ -30,6 +31,7 @@ const createApp = (auth) => {
     app.use("/api/savePackage", savePackageRouter);
     app.use("/api/reviews", ReviewRoutes);
     app.use("/api/admin", AdminRoute);
+    app.use("/api/contact", emailRoute)
 
     app.get("/", (req, res) => {
         res.send("M traders server is running successfully");
