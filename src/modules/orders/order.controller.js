@@ -4,6 +4,7 @@ import catchAsync from "../../utils/catchAsync.js";
 import Order from "./order.model.js";
 import Package from "../services-packages/package.model.js";
 import AppError from "../../utils/AppError.js";
+import { sendOrderConfirmationEmail } from "./sendOrderEmail.js";
 
 
 export const handleStripeWebhook = catchAsync(async (req, res) => {
@@ -71,6 +72,26 @@ export const handleStripeWebhook = catchAsync(async (req, res) => {
         });
 
         console.log("Order created in DB successfully! Order ID:", newOrder._id);
+
+
+        // Send Email using Helper Function
+        if (currentUser.email) {
+            try {
+                await sendOrderConfirmationEmail({
+                    toEmail: currentUser.email,
+                    userName: currentUser.name || "Customer",
+                    orderId: newOrder._id,
+                    packageTitle: targetPackage.title,
+                    price: targetPackage.price,
+                    deliveryTime: targetPackage.deliveryTime,
+                    deliveryDate: calculatedDeliveryDate,
+                    resourceLink: resourceLink || ""
+                });
+                console.log("Confirmation email sent successfully!");
+            } catch (emailErr) {
+                console.error("Failed to send order email:", emailErr);
+            }
+        }
     }
 
     res.status(200).json({
