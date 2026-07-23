@@ -14,6 +14,6 @@ router.get("/my-orders", verifyToken, protectRoute(ROLES.USER), getMyOrders);
 router.get("/order-details/:id", verifyToken, getOrderDetails);
 router.get("/get-allOrders", verifyToken, protectRoute(ROLES.ADMIN), getAllOrders)
 router.patch("/update-order/:id", verifyToken, protectRoute(ROLES.ADMIN), updateOrderStatus)
-router.delete("/cancel-order", verifyToken, protectRoute(ROLES.USER), cancelOrder)
+router.delete("/cancel-order/:id", verifyToken, protectRoute(ROLES.USER), cancelOrder)
 
 export default router;

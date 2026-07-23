@@ -12,7 +12,7 @@ export const verifyToken = async (req, res, next) => {
             headers: fromNodeHeaders(req.headers),
         });
 
-        console.log(session);
+        // console.log(session);
 
         if (!session || !session.user) {
             return res.status(401).json({

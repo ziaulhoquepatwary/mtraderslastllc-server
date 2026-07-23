@@ -213,30 +213,53 @@ export const cancelOrder = catchAsync(async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
+    // ১. ডাটাবেজ থেকে অর্ডার খোঁজা
     const order = await Order.findOne({ _id: id, userId });
     if (!order) {
         throw new AppError(404, "Order not found");
     }
 
-    if (order.status !== "pending" && order.status !== "contacted") {
-        throw new AppError(400, "Order cannot be cancelled at this stage");
+    // ২. আগের ক্যানসেল করা অর্ডার আবার ক্যানসেল রোধ করা
+    if (order.status === 'cancelled') {
+        throw new AppError(400, "This order has already been cancelled");
     }
 
-    const orderPlacementTime = new Date(order.createdAt).getTime();
-    const currentTime = new Date().getTime();
-    const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
+    // ৩. ডেলভারি ডেট পার হয়েছে কিনা চেক
+    const currentDate = new Date();
+    const deliveryDate = new Date(order.deliveryDate);
 
-    if (currentTime - orderPlacementTime > oneDayInMilliseconds) {
-        throw new AppError(400, "Cancellation period has expired (Max 24 hours)");
+    if (currentDate <= deliveryDate) {
+        throw new AppError(
+            400,
+            "You cannot cancel the order before the delivery date has passed"
+        );
     }
 
-    order.status = "cancelled";
-    order.paymentStatus = "refunded";
+    // ৪. Stripe SDK ইনস্ট্যান্ট তৈরি (Webhook এর মতো সরাসরি `process.env.STRIPE_SECRET_KEY` দিয়ে)
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    // ৫. ডাটাবেজে থাকা stripeSessionId থেকে Checkout Session অবজেক্ট রিট্রিভ করা
+    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+
+    if (!session || !session.payment_intent) {
+        throw new AppError(400, "No valid payment intent found for this order to issue a refund");
+    }
+
+    // ৬. Stripe-এ Payment Intent ID ব্যবহার করে রিফান্ড প্রসেস করা
+    await stripe.refunds.create({
+        payment_intent: session.payment_intent,
+        reason: 'requested_by_customer'
+    });
+
+    // ৭. স্কিমা পরিবর্তন না করে অর্ডারের বিদ্যমান ফিল্ড আপডেট করা
+    order.status = 'cancelled';
+    order.paymentStatus = 'refunded';
+
     await order.save();
 
-    return res.status(200).json({
+    res.status(200).json({
         success: true,
-        message: "Order cancelled successfully, refund initiated",
-        data: order,
+        message: "Order cancelled and refunded successfully",
+        data: order
     });
 });
